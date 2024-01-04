@@ -14,13 +14,14 @@ export async function createTorrent({
         files,
         name,
         announce,
+        isPrivate,
         pieceLength,
         meta
     }: {
         files: File[] | File,
         name: string,
         announce?: string | string[] | string[][],
-        private?: boolean,
+        isPrivate?: boolean,
         pieceLength?: number,
         meta?: {
             "comment"?: string,
@@ -66,7 +67,7 @@ export async function createTorrent({
             ben.encodeString('name', to)
             ben.encodeString(name, to)
 
-            if(meta?.private) {
+            if(isPrivate) {
                 ben.encodeString('private', to)
                 ben.encodeInt(1, to)
             }

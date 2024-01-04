@@ -31,7 +31,7 @@ describe('createTorrent', () => {
                 getStream: () => fs.createReadStream("test/" + entry.name)
             })),
             announce: "http://localhost:8080/announce",
-            private: true,
+            isPrivate: true,
             name: "Test Torrent"
         }, stream)
         mockfs.restore()
@@ -62,7 +62,7 @@ describe('createTorrent', () => {
                 getStream: () => fs.createReadStream(path + "/" + entry.name)
             })),
             announce: "http://localhost:8080/announce",
-            private: true,
+            isPrivate: true,
             name: "Test Torrent"
         }, stream)
         createTorrentPack(path, {
