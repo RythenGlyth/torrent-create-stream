@@ -16,7 +16,8 @@ export async function createTorrent({
         announce,
         isPrivate,
         pieceLength,
-        meta
+        meta,
+        onPiecesProgress
     }: {
         files: File[] | File,
         name: string,
@@ -31,7 +32,8 @@ export async function createTorrent({
             "publisher"?: string,
             "publisher-url"?: string,
             [key: string]: unknown
-        }
+        },
+        onPiecesProgress?: (currFile: number, fileCount: number, bytesRead: number, totalBytes: number, currPiece: number, pieceCount: number) => void
     },
     to: Writable
 ) {//TODO: progress
@@ -94,6 +96,7 @@ export async function createTorrent({
 
 
             const alllength = Array.isArray(files) ? files.reduce((acc, file) => acc + file.length, 0) : files.length
+            let byteTracker = 0
             if(!pieceLength) pieceLength = optimumPieceLength(alllength)
             ben.encodeString('piece length', to)
             ben.encodeInt(pieceLength!, to)
@@ -105,9 +108,11 @@ export async function createTorrent({
             const getStreams = Array.isArray(files) ? files.map(file => file.getStream) : [files.getStream]
             
             let piece = Buffer.alloc(0)
-            for (const getStream of getStreams) {
-                const stream = await getStream()
+            for (const i in getStreams) {
+                const stream = await getStreams[i]()
                 stream.on('data', chunk => {
+                    byteTracker += chunk.length
+                    if (onPiecesProgress) onPiecesProgress(Number(i), getStreams.length, byteTracker, alllength, Math.floor((byteTracker-1) / pieceLength!), Math.ceil(alllength / pieceLength!))
                     let offset = 0
                     while (offset < chunk.length) {
                         const remaining = pieceLength! - piece.length
@@ -129,6 +134,7 @@ export async function createTorrent({
             }
             if (piece.length) {
                 piecesStream.write(crypto.createHash('sha1').update(piece).digest())
+                if (onPiecesProgress) onPiecesProgress(getStreams.length-1, getStreams.length, alllength, alllength, Math.floor((alllength-1) / pieceLength!), Math.ceil(alllength / pieceLength!))
             }
             piecesStream.end()
         }, to)

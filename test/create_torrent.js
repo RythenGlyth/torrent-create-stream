@@ -32,7 +32,10 @@ describe('createTorrent', () => {
             })),
             announce: "http://localhost:8080/announce",
             isPrivate: true,
-            name: "Test Torrent"
+            name: "Test Torrent",
+            onPiecesProgress: (currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount) => {
+                console.log("progress:", currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount)
+            }
         }, stream)
         mockfs.restore()
         fs.writeFileSync("test_out/test.torrent", stream.toBuffer())
