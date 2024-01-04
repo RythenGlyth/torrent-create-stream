@@ -1,5 +1,6 @@
 # torrent-create-stream
-![https://npmjs.org/package/torrent-create-stream](https://img.shields.io/npm/v/torrent-create-stream.svg)
+[![npm](https://img.shields.io/npm/v/torrent-create-stream.svg)](https://npmjs.org/package/torrent-create-stream)
+
 
 ## Install
 
