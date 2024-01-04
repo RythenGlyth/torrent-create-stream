@@ -54,7 +54,6 @@ describe('createTorrent', () => {
         let stream = new StreamableBuffer()
         
         const path = "./test"
-        console.log(walk(path).length)
         await createTorrent({
             files: walk(path).map((entry) => ({
                 length: fs.statSync(path + "/" + entry.name).size,

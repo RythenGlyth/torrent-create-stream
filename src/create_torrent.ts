@@ -7,7 +7,7 @@ import { bencodeStreamable as ben } from "./streamable_bencode"
 type File = {
     path: string,
     length: number,
-    getStream: () => Readable
+    getStream: () => Promise<Readable>
 }
 
 export async function createTorrent({
@@ -34,7 +34,7 @@ export async function createTorrent({
         }
     },
     to: Writable
-) {
+) {//TODO: progress
     if(!name) throw new Error('name is required')
     if(!files) throw new Error('files is required')
     if(!to) throw new Error('to is required')
@@ -106,7 +106,7 @@ export async function createTorrent({
             
             let piece = Buffer.alloc(0)
             for (const getStream of getStreams) {
-                const stream = getStream()
+                const stream = await getStream()
                 stream.on('data', chunk => {
                     let offset = 0
                     while (offset < chunk.length) {
