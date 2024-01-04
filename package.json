@@ -40,9 +40,13 @@
     "@types/node": "^20.10.6",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
+    "create-torrent": "^5.0.9",
     "eslint": "^8.56.0",
     "mocha": "^10.2.0",
     "mock-fs": "^5.2.0",
     "rimraf": "^5.0.5"
+  },
+  "dependencies": {
+    "piece-length": "github:michaelrhodes/piece-length"
   }
 }

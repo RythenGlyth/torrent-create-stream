@@ -2,3 +2,4 @@ package_lock.json
 node_modules
 .vscode
 dist
+test_out
