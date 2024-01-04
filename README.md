@@ -1,6 +1,11 @@
 # torrent-create-stream
 [![npm](https://img.shields.io/npm/v/torrent-create-stream.svg)](https://npmjs.org/package/torrent-create-stream)
 
+This package is an alternative to the [torrent-create](https://www.npmjs.com/package/torrent-create) package. It has two main advantages:
+
+- This package allows to create torrent files from dynamically generated streams. This is useful if you want to create a torrent file from a stream that is not a file on the disk but rather a large file that is generated in memory or from a database which you don't want to load completely into memory.
+
+- This package writes to an output stream instead of a file.
 
 ## Install
 

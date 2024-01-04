@@ -1,6 +1,6 @@
 {
   "name": "torrent-create-stream",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Create a torrent file with a stream-getter interface",
   "main": "dist/index.js",
   "files": [
@@ -23,7 +23,9 @@
     "p2p",
     "peer-to-peer",
     "torrent file",
-    "create torrent"
+    "create torrent",
+    "stream",
+    "streaming"
   ],
   "scripts": {
     "clean": "rimraf ./dist",
