@@ -7,7 +7,7 @@ import { bencodeStreamable as ben } from "./streamable_bencode"
 type File = {
     path: string,
     length: number,
-    getStream: () => Promise<Readable>
+    getStream: (startAt: number, endAt: number) => Promise<Readable>
 }
 
 export async function createTorrent({
@@ -17,7 +17,8 @@ export async function createTorrent({
         isPrivate,
         pieceLength,
         meta,
-        onPiecesProgress
+        onPiecesProgress,
+        parallelReads
     }: {
         files: File[] | File,
         name: string,
@@ -33,7 +34,8 @@ export async function createTorrent({
             "publisher-url"?: string,
             [key: string]: unknown
         },
-        onPiecesProgress?: (currFile: number, fileCount: number, bytesRead: number, totalBytes: number, currPiece: number, pieceCount: number) => void
+        onPiecesProgress?: (currFile: number, fileCount: number, bytesRead: number, totalBytes: number, currPiece: number, pieceCount: number) => void,
+        parallelReads?: number
     },
     to: Writable
 ) {//TODO: progress
@@ -77,7 +79,7 @@ export async function createTorrent({
             if (Array.isArray(files)) {
                 ben.encodeString('files', to)
                 await ben.encodeList(async to => {
-                    for (const file of files) {
+                    for (const file of files as File[]) {
                         await ben.encodeDict(async to => {
                             ben.encodeString('length', to)
                             ben.encodeInt(file.length, to)
@@ -96,45 +98,146 @@ export async function createTorrent({
 
 
             const alllength = Array.isArray(files) ? files.reduce((acc, file) => acc + file.length, 0) : files.length
-            let byteTracker = 0
             if(!pieceLength) pieceLength = optimumPieceLength(alllength)
+            const pieceCount = Math.ceil(alllength / pieceLength!)
+            let byteTracker = 0
             ben.encodeString('piece length', to)
             ben.encodeInt(pieceLength!, to)
             
             const piecesStream = new PassThrough()
             ben.encodeString('pieces', to)
-            ben.encodeStream(piecesStream, Math.ceil(alllength / pieceLength!) * 20, to)
+            ben.encodeStream(piecesStream, pieceCount * 20, to)
     
-            const getStreams = Array.isArray(files) ? files.map(file => file.getStream) : [files.getStream]
+            files = (Array.isArray(files) ? files : [files]) as File[]
             
-            let piece = Buffer.alloc(0)
-            for (const i in getStreams) {
-                const stream = await getStreams[i]()
-                stream.on('data', chunk => {
-                    byteTracker += chunk.length
-                    if (onPiecesProgress) onPiecesProgress(Number(i), getStreams.length, byteTracker, alllength, Math.floor((byteTracker-1) / pieceLength!), Math.ceil(alllength / pieceLength!))
-                    let offset = 0
-                    while (offset < chunk.length) {
-                        const remaining = pieceLength! - piece.length
-                        if (chunk.length - offset < remaining) {
-                            piece = Buffer.concat([piece, chunk.slice(offset)])
-                            offset += chunk.length - offset
-                        } else {
-                            piece = Buffer.concat([piece, chunk.slice(offset, offset + remaining)])
-                            offset += remaining
-                            piecesStream.write(crypto.createHash('sha1').update(piece).digest())
-                            piece = Buffer.alloc(0)
+            if(!parallelReads) {
+                let piece = Buffer.alloc(0)
+                for (const i in files) {
+                    const stream = await files[i].getStream(0, files[i].length)
+                    stream.on('data', chunk => {
+                        byteTracker += chunk.length
+                        if (onPiecesProgress) onPiecesProgress(Number(i), files.length, byteTracker, alllength, Math.floor((byteTracker-1) / pieceLength!), pieceCount)
+                        let offset = 0
+                        while (offset < chunk.length) {
+                            const remaining = pieceLength! - piece.length
+                            if (chunk.length - offset < remaining) {
+                                piece = Buffer.concat([piece, chunk.slice(offset)])
+                                offset += chunk.length - offset
+                            } else {
+                                piece = Buffer.concat([piece, chunk.slice(offset, offset + remaining)])
+                                offset += remaining
+                                piecesStream.write(crypto.createHash('sha1').update(piece).digest())
+                                piece = Buffer.alloc(0)
+                            }
                         }
+                    })
+                    await new Promise((resolve, reject) => {
+                        stream.on('end', resolve)
+                        stream.on('error', reject)
+                    })
+                }
+                if (piece.length) {
+                    piecesStream.write(crypto.createHash('sha1').update(piece).digest())
+                    if (onPiecesProgress) onPiecesProgress(files.length-1, files.length, alllength, alllength, Math.floor((alllength-1) / pieceLength!), pieceCount)
+                }
+            } else {
+                let currFile = 0
+                let currFileByte = 0
+                const pieces: {
+                    from: {
+                        file: number,
+                        start: number
+                    },
+                    to: {
+                        file: number,
+                        end: number
+                    }
+                }[] = Array(pieceCount).fill(0).map(() => {
+                    while(currFileByte > (files as File[])[currFile].length) {
+                        currFile++
+                        currFileByte = 0
+                    }
+                    const from = {
+                        file: currFile,
+                        start: currFileByte
+                    }
+                    currFileByte += pieceLength!
+                    while(currFileByte > (files as File[])[currFile].length) {
+                        currFileByte -= (files as File[])[currFile].length
+                        if(currFile == (files as File[]).length-1) {
+                            currFileByte = (files as File[])[currFile].length
+                            break
+                        }
+                        currFile++
+                    }
+                    const to = {
+                        file: currFile,
+                        end: currFileByte
+                    }
+                    return {
+                        from,
+                        to
                     }
                 })
-                await new Promise((resolve, reject) => {
-                    stream.on('end', resolve)
-                    stream.on('error', reject)
+                console.log(pieces)
+                const taskFinishPromises: {resolve: (buf: Buffer) => void, promise: Promise<Buffer>}[] = Array(pieceCount).fill(0).map(() => {
+                    let resolve: (_: Buffer) => void
+                    const x = {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        resolve: (_: Buffer) => {},
+                        promise: new Promise<Buffer>(res => {
+                            resolve = ((buf) => {res(buf)})
+                        })
+                    }
+                    x.resolve = resolve!
+                    return x
                 })
-            }
-            if (piece.length) {
-                piecesStream.write(crypto.createHash('sha1').update(piece).digest())
-                if (onPiecesProgress) onPiecesProgress(getStreams.length-1, getStreams.length, alllength, alllength, Math.floor((alllength-1) / pieceLength!), Math.ceil(alllength / pieceLength!))
+                let currPiece = 0
+                const collectPiece = async (pieceNum: number) => {
+                    let piece = Buffer.alloc(0)
+                    let currFile = pieces[pieceNum].from.file
+                    let currFileByte = pieces[pieceNum].from.start
+                    while(currFile <= pieces[pieceNum].to.file) {
+                        const stream = await (files as File[])[currFile].getStream(currFileByte, currFile == pieces[pieceNum].to.file ? pieces[pieceNum].to.end : (files as File[])[currFile].length)
+                        stream.on('data', chunk => {
+                            byteTracker += chunk.length
+                            if (onPiecesProgress) onPiecesProgress(pieces[currPiece].to.file, files.length, byteTracker, alllength, currPiece, pieceCount)
+
+                            piece = Buffer.concat([piece, chunk])
+                        })
+                        await new Promise((resolve, reject) => {
+                            stream.on('end', resolve)
+                            stream.on('error', reject)
+                        })
+                        currFileByte = 0
+                        currFile++
+                    }
+                    console.log(piece, piece.toString())
+                    taskFinishPromises[pieceNum].resolve(crypto.createHash('sha1').update(piece).digest())
+                }
+                (async () => {
+                    //always run parallelReads x collectPiece
+                    let lastPiece = 0
+                    let running = 0
+                    function fillRunning() {
+                        while(running < parallelReads!) {
+                            collectPiece(lastPiece).then(() => {
+                                running--
+                                fillRunning()
+                            }).catch(err => {
+                                throw err
+                            })
+                            lastPiece++
+                            running++
+                        }
+                    }
+                    fillRunning()
+                })()
+                for(currPiece = 0; currPiece < taskFinishPromises.length; currPiece++) {
+                    const buff = await taskFinishPromises[currPiece].promise
+                    piecesStream.write(buff)
+                    if (onPiecesProgress) onPiecesProgress(pieces[currPiece].to.file, files.length, byteTracker, alllength, currPiece, pieceCount)
+                }
             }
             piecesStream.end()
         }, to)

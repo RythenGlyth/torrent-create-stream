@@ -24,10 +24,10 @@ await createTorrent({
         {
             name: "file_from_memory.txt",
             length: 100,
-            getStream: () => {
+            getStream: (startAt, endAt) => {
                 return new Readable({
                     read() {
-                        for (let i = 0; i < 100; i++) {
+                        for (let i = startAt; i < endAt; i++) {
                             this.push("a")
                         }
                         this.push(null)
@@ -38,8 +38,11 @@ await createTorrent({
         {
             name: "file_from_os.txt",
             length: fs.statSync("./file_from_os.txt").size,
-            getStream: () => {
-                return fs.createReadStream("./file_from_os.txt")
+            getStream: (startAt, endAt) => {
+                return fs.createReadStream("./file_from_os.txt", {
+                    start: startAt,
+                    end: endAt
+                })
             }
         }
     ],

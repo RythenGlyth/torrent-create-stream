@@ -28,13 +28,13 @@ describe('createTorrent', () => {
             files: walk('test').map((entry) => ({
                 length: entry[Object.getOwnPropertySymbols(entry).find((s) => s.description == "stats")].size,
                 path: entry.name,
-                getStream: () => fs.createReadStream("test/" + entry.name)
+                getStream: (startAt, endAt) => fs.createReadStream("test/" + entry.name, { start: startAt, end: endAt })
             })),
             announce: "http://localhost:8080/announce",
             isPrivate: true,
             name: "Test Torrent",
             onPiecesProgress: (currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount) => {
-                console.log("progress:", currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount)
+                console.log("progress Normal:", currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount)
             }
         }, stream)
         mockfs.restore()
@@ -61,7 +61,7 @@ describe('createTorrent', () => {
             files: walk(path).map((entry) => ({
                 length: fs.statSync(path + "/" + entry.name).size,
                 path: entry.name,
-                getStream: () => fs.createReadStream(path + "/" + entry.name)
+                getStream: (startAt, endAt) => fs.createReadStream(path + "/" + entry.name, { start: startAt, end: endAt })
             })),
             announce: "http://localhost:8080/announce",
             isPrivate: true,
@@ -77,5 +77,39 @@ describe('createTorrent', () => {
             fs.writeFileSync("test_out/test_pack.torrent", torrent)
             fs.writeFileSync("test_out/test_stream.torrent", stream.toBuffer())
         })
+    })
+
+    it('should create a torrent async', async () => {
+        mockfs({
+            'test': {
+                'test.txt': 'Testfile 1',
+                'test2.txt': 'Testfile 2',
+                'subdir': {
+                    'test.txt': 'Testfile 1 another one'
+                }
+            },
+            'test2': {
+                'test2.txt': 'Testfile 2 another one'
+            },
+        })
+        let stream = new StreamableBuffer()
+        
+        await createTorrent({
+            files: walk('test').map((entry) => ({
+                length: entry[Object.getOwnPropertySymbols(entry).find((s) => s.description == "stats")].size,
+                path: entry.name,
+                getStream: (startAt, endAt) => fs.createReadStream("test/" + entry.name, { start: startAt, end: endAt })
+            })),
+            announce: "http://localhost:8080/announce",
+            isPrivate: true,
+            name: "Test Torrent",
+            onPiecesProgress: (currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount) => {
+                console.log("progress async:", currFile, fileCount, bytesRead, totalBytes, currPiece, pieceCount)
+            },
+            parallelReads: 5
+        }, stream)
+        mockfs.restore()
+        fs.writeFileSync("test_out/test_async.torrent", stream.toBuffer())
+
     })
 })
