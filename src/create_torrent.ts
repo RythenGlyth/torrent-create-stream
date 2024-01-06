@@ -179,7 +179,6 @@ export async function createTorrent({
                         to
                     }
                 })
-                console.log(pieces)
                 const taskFinishPromises: {resolve: (buf: Buffer) => void, promise: Promise<Buffer>}[] = Array(pieceCount).fill(0).map(() => {
                     let resolve: (_: Buffer) => void
                     const x = {
@@ -212,7 +211,6 @@ export async function createTorrent({
                         currFileByte = 0
                         currFile++
                     }
-                    console.log(piece, piece.toString())
                     taskFinishPromises[pieceNum].resolve(crypto.createHash('sha1').update(piece).digest())
                 }
                 (async () => {

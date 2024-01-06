@@ -1,6 +1,6 @@
 {
   "name": "torrent-create-stream",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Create a torrent file with a stream-getter interface",
   "main": "dist/index.js",
   "files": [
@@ -29,7 +29,7 @@
     "async",
     "async/await",
     "parallel",
-    "parallel processing",
+    "parallel processing"
   ],
   "scripts": {
     "clean": "rimraf ./dist",
