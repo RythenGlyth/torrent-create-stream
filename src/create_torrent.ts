@@ -109,8 +109,6 @@ export async function createTorrent({
             ben.encodeStream(piecesStream, pieceCount * 20, to)
     
             files = (Array.isArray(files) ? files : [files]) as File[]
-
-            const hash = crypto.createHash('sha1')
             
             if(!parallelReads) {
                 let piece = Buffer.alloc(0)
@@ -128,7 +126,7 @@ export async function createTorrent({
                             } else {
                                 piece = Buffer.concat([piece, chunk.slice(offset, offset + remaining)])
                                 offset += remaining
-                                piecesStream.write(hash.update(piece).digest())
+                                piecesStream.write(crypto.createHash("sha1").update(piece).digest())
                                 piece = Buffer.alloc(0)
                             }
                         }
@@ -139,7 +137,7 @@ export async function createTorrent({
                     })
                 }
                 if (piece.length) {
-                    piecesStream.write(hash.update(piece).digest())
+                    piecesStream.write(crypto.createHash("sha1").update(piece).digest())
                     if (onPiecesProgress) onPiecesProgress(files.length-1, files.length, alllength, alllength, Math.floor((alllength-1) / pieceLength!), pieceCount)
                 }
             } else {
@@ -213,7 +211,7 @@ export async function createTorrent({
                         currFileByte = 0
                         currFile++
                     }
-                    taskFinishPromises[pieceNum].resolve(hash.update(piece).digest())
+                    taskFinishPromises[pieceNum].resolve(crypto.createHash("sha1").update(piece).digest())
                 }
                 (async () => {
                     //always run parallelReads x collectPiece

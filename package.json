@@ -1,6 +1,6 @@
 {
   "name": "torrent-create-stream",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Create a torrent file with a stream-getter interface",
   "main": "dist/index.js",
   "files": [
