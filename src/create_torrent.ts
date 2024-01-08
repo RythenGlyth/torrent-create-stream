@@ -111,7 +111,9 @@ export async function createTorrent({
             files = (Array.isArray(files) ? files : [files]) as File[]
             
             if(!parallelReads) {
-                let piece = Buffer.alloc(0)
+                //let piece = Buffer.alloc(0)
+                let hash = crypto.createHash("sha1")
+                let currLength = 0
                 for (const i in files) {
                     const stream = await files[i].getStream(0, files[i].length)
                     stream.on('data', chunk => {
@@ -119,15 +121,22 @@ export async function createTorrent({
                         if (onPiecesProgress) onPiecesProgress(Number(i), files.length, byteTracker, alllength, Math.floor((byteTracker-1) / pieceLength!), pieceCount)
                         let offset = 0
                         while (offset < chunk.length) {
-                            const remaining = pieceLength! - piece.length
+                            //const remaining = pieceLength! - piece.length
+                            const remaining = pieceLength! - currLength
                             if (chunk.length - offset < remaining) {
-                                piece = Buffer.concat([piece, chunk.slice(offset)])
+                                //piece = Buffer.concat([piece, chunk.slice(offset)])
+                                hash.update(chunk.slice(offset))
+                                currLength += chunk.length - offset
                                 offset += chunk.length - offset
                             } else {
-                                piece = Buffer.concat([piece, chunk.slice(offset, offset + remaining)])
+                                //piece = Buffer.concat([piece, chunk.slice(offset, offset + remaining)])
+                                hash.update(chunk.slice(offset, offset + remaining))
                                 offset += remaining
-                                piecesStream.write(crypto.createHash("sha1").update(piece).digest())
-                                piece = Buffer.alloc(0)
+                                //piecesStream.write(crypto.createHash("sha1").update(piece).digest())
+                                //piece = Buffer.alloc(0)
+                                piecesStream.write(hash.digest())
+                                hash = crypto.createHash("sha1")
+                                currLength = 0
                             }
                         }
                     })
@@ -136,8 +145,10 @@ export async function createTorrent({
                         stream.on('error', reject)
                     })
                 }
-                if (piece.length) {
-                    piecesStream.write(crypto.createHash("sha1").update(piece).digest())
+                //if (piece.length) {
+                if (currLength) {
+                    //piecesStream.write(crypto.createHash("sha1").update(piece).digest())
+                    piecesStream.write(hash.digest())
                     if (onPiecesProgress) onPiecesProgress(files.length-1, files.length, alllength, alllength, Math.floor((alllength-1) / pieceLength!), pieceCount)
                 }
             } else {
@@ -193,7 +204,9 @@ export async function createTorrent({
                 })
                 let currPiece = 0
                 const collectPiece = async (pieceNum: number) => {
-                    let piece = Buffer.alloc(0)
+                    //let piece = Buffer.alloc(0)
+                    let hash = crypto.createHash("sha1")
+                    let currLength = 0
                     let currFile = pieces[pieceNum].from.file
                     let currFileByte = pieces[pieceNum].from.start
                     while(currFile <= pieces[pieceNum].to.file) {
@@ -202,7 +215,9 @@ export async function createTorrent({
                             byteTracker += chunk.length
                             if (onPiecesProgress) onPiecesProgress(pieces[currPiece].to.file, files.length, byteTracker, alllength, currPiece, pieceCount)
 
-                            piece = Buffer.concat([piece, chunk])
+                            //piece = Buffer.concat([piece, chunk])
+                            hash.update(chunk)
+                            currLength += chunk.length
                         })
                         await new Promise((resolve, reject) => {
                             stream.on('end', resolve)
@@ -211,7 +226,8 @@ export async function createTorrent({
                         currFileByte = 0
                         currFile++
                     }
-                    taskFinishPromises[pieceNum].resolve(crypto.createHash("sha1").update(piece).digest())
+                    //taskFinishPromises[pieceNum].resolve(crypto.createHash("sha1").update(piece).digest())
+                    taskFinishPromises[pieceNum].resolve(hash.digest())
                 }
                 (async () => {
                     //always run parallelReads x collectPiece
