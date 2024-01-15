@@ -52,6 +52,7 @@
     "eslint": "^8.56.0",
     "mocha": "^10.2.0",
     "mock-fs": "^5.2.0",
+    "node-torrent-stream": "github:unusualbob/node-torrent-stream",
     "rimraf": "^5.0.5"
   },
   "dependencies": {

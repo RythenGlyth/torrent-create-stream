@@ -6,8 +6,11 @@ const { Writable, PassThrough } = require("stream")
 const consumers = require("stream/consumers")
 const fs = require("fs")
 const Benchmarkify = require("benchmarkify")
+const Torrent = require("node-torrent-stream")
 
 const benchmark = new Benchmarkify("Comparison", { description: "Compares create-torrent to torrent-create-stream and torrent-create-stream in parallel", chartImage: true }).printHeader();
+
+
 
 benchmark.createSuite("10MB File")
 .setup(() => {
@@ -24,7 +27,7 @@ benchmark.createSuite("10MB File")
 .ref("torrent-create-stream", async (done) => {
     let stream = new PassThrough()
     let data = consumers.buffer(stream)
-    await createTorrent({
+    createTorrent({
         files: {
             length: fs.statSync("file").size,
             path: "file",
@@ -32,6 +35,18 @@ benchmark.createSuite("10MB File")
         },
         name: "Test Torrent",
     }, stream)
+    await data
+    done()
+}).ref("torrent-stream", async (done) => {
+    let stream = new PassThrough()
+    let data = consumers.buffer(stream)
+    let torrent = new Torrent({
+        announce: "http://localhost:8080/announce",
+        name: "Test Torrent",
+    })
+    fs.createReadStream("file").pipe(torrent)
+    torrent.pipe(stream)
+    await data
     done()
 })
 
@@ -52,7 +67,7 @@ benchmark.createSuite("2GB File")
 .ref("torrent-create-stream", async (done) => {
     let stream = new PassThrough()
     let data = consumers.buffer(stream)
-    await createTorrent({
+    createTorrent({
         files: {
             length: fs.statSync("file").size,
             path: "file",
@@ -60,6 +75,18 @@ benchmark.createSuite("2GB File")
         },
         name: "Test Torrent",
     }, stream)
+    await data
+    done()
+}).ref("torrent-stream", async (done) => {
+    let stream = new PassThrough()
+    let data = consumers.buffer(stream)
+    let torrent = new Torrent({
+        announce: "http://localhost:8080/announce",
+        name: "Test Torrent",
+    })
+    fs.createReadStream("file").pipe(torrent)
+    torrent.pipe(stream)
+    await data
     done()
 })
 

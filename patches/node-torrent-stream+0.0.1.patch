@@ -1,0 +1,22 @@
+diff --git a/node_modules/node-torrent-stream/index.js b/node_modules/node-torrent-stream/index.js
+index a154954..6c155ed 100644
+--- a/node_modules/node-torrent-stream/index.js
++++ b/node_modules/node-torrent-stream/index.js
+@@ -49,7 +49,7 @@ function TorrentStream(options) {
+ 
+   this.info = {
+     name: options.name,
+-    pieces: new Buffer(0),
++    pieces: Buffer.alloc(0),
+     length: 0,
+     "piece length": this.pieceLength
+   };
+@@ -60,7 +60,7 @@ function TorrentStream(options) {
+ 
+   this.encoding = options.encoding || 'utf8';
+ 
+-  this.buffer = new Buffer(0, this.encoding);
++  this.buffer = Buffer.from("", this.encoding);
+ }
+ 
+ inherits(TorrentStream, Transform);
