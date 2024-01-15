@@ -37,7 +37,7 @@ benchmark.createSuite("10MB File")
     }, stream)
     await data
     done()
-}).ref("torrent-stream", async (done) => {
+}).ref("node-torrent-stream", async (done) => {
     let stream = new PassThrough()
     let data = consumers.buffer(stream)
     let torrent = new Torrent({
@@ -77,7 +77,7 @@ benchmark.createSuite("2GB File")
     }, stream)
     await data
     done()
-}).ref("torrent-stream", async (done) => {
+}).ref("node-torrent-stream", async (done) => {
     let stream = new PassThrough()
     let data = consumers.buffer(stream)
     let torrent = new Torrent({

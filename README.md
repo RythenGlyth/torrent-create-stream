@@ -61,6 +61,24 @@ await createTorrent({
 }, fs.createWriteStream("./test.torrent"))
 ```
 
+## Benchmark
+
+for reference see [benchmark.js](./benchmark/benchmark.js)
+
+### 10MB File Torrent Creation
+| package | speed | avg time |
+| --- | --- | --- |
+| [torrent-create](https://www.npmjs.com/package/create-torrent) | 41 ops/sec | 24ms |
+| [node-torrent-stream](https://github.com/unusualbob/node-torrent-stream/tree/master) | 42 ops/sec | 23ms |
+| torrent-create-stream (this package) | 53 ops/sec | 18ms |
+
+### 2GB File Torrent Creation
+| package | speed | avg time |
+| --- | --- | --- |
+| [torrent-create](https://www.npmjs.com/package/create-torrent) | | |
+| [node-torrent-stream](https://github.com/unusualbob/node-torrent-stream/tree/master) | | |
+| torrent-create-stream (this package) |  |  | 
+
 ## Contributing
 
 Feel free to contribute to this project. Fork and make a Pull Request, or create an Issue if you see any problem.
