@@ -234,7 +234,7 @@ export async function createTorrent({
                     let lastPiece = 0
                     let running = 0
                     function fillRunning() {
-                        while(running < parallelReads!) {
+                        while(running < parallelReads! && lastPiece < pieces.length) {
                             collectPiece(lastPiece).then(() => {
                                 running--
                                 fillRunning()
