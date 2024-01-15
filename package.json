@@ -38,8 +38,7 @@
     "lint-fix": "eslint --fix \"./src/**/*.ts\"",
     "test": "npm run lint && npm run build && npm run testOnly",
     "testOnly": "mocha",
-    "prepare": "npm run build",
-    "postinstall": "patch-package"
+    "prepare": "npm run build; npx patch-package"
   },
   "author": "RythenGlyth <rythenglyth@gmail.com>",
   "devDependencies": {
