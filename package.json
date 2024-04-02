@@ -1,61 +1,61 @@
 {
-  "name": "torrent-create-stream",
-  "version": "1.1.1",
-  "description": "Create a torrent file with a stream-getter interface",
-  "main": "dist/index.js",
-  "files": [
-    "dist/**/*"
-  ],
-  "directories": {
-    "test": "test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/RythenGlyth/torrent-create-stream.git"
-  },
-  "license": "MIT",
-  "keywords": [
-    "torrent",
-    "create",
-    ".torrent",
-    "file",
-    "bittorrent",
-    "p2p",
-    "peer-to-peer",
-    "torrent file",
-    "create torrent",
-    "stream",
-    "streaming",
-    "async",
-    "async/await",
-    "parallel",
-    "parallel processing"
-  ],
-  "scripts": {
-    "clean": "rimraf ./dist",
-    "build": "npm run clean && tsc",
-    "lint": "eslint \"./src/**/*.ts\"",
-    "lint-fix": "eslint --fix \"./src/**/*.ts\"",
-    "test": "npm run lint && npm run build && npm run testOnly",
-    "testOnly": "mocha",
-    "prepare": "npm run build; npx patch-package"
-  },
-  "author": "RythenGlyth <rythenglyth@gmail.com>",
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.10.6",
-    "@types/rusha": "^0.8.3",
-    "@typescript-eslint/eslint-plugin": "^6.17.0",
-    "@typescript-eslint/parser": "^6.17.0",
-    "benchmarkify": "^4.0.0",
-    "create-torrent": "^5.0.9",
-    "eslint": "^8.56.0",
-    "mocha": "^10.2.0",
-    "mock-fs": "^5.2.0",
-    "node-torrent-stream": "github:unusualbob/node-torrent-stream",
-    "rimraf": "^5.0.5"
-  },
-  "dependencies": {
-    "piece-length": "github:michaelrhodes/piece-length"
-  }
+    "name": "torrent-create-stream",
+    "version": "1.1.1",
+    "description": "Create a torrent file with a stream-getter interface",
+    "main": "dist/index.js",
+    "files": [
+        "dist/**/*"
+    ],
+    "directories": {
+        "test": "test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RythenGlyth/torrent-create-stream.git"
+    },
+    "license": "MIT",
+    "keywords": [
+        "torrent",
+        "create",
+        ".torrent",
+        "file",
+        "bittorrent",
+        "p2p",
+        "peer-to-peer",
+        "torrent file",
+        "create torrent",
+        "stream",
+        "streaming",
+        "async",
+        "async/await",
+        "parallel",
+        "parallel processing"
+    ],
+    "scripts": {
+        "clean": "rimraf ./dist",
+        "build": "npm run clean && tsc",
+        "lint": "eslint \"./src/**/*.ts\"",
+        "lint-fix": "eslint --fix \"./src/**/*.ts\"",
+        "test": "npm run lint && npm run build && npm run testOnly",
+        "testOnly": "mocha",
+        "prepare": "npm run build && npx patch-package"
+    },
+    "author": "RythenGlyth <rythenglyth@gmail.com>",
+    "devDependencies": {
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.10.6",
+        "@types/rusha": "^0.8.3",
+        "@typescript-eslint/eslint-plugin": "^6.17.0",
+        "@typescript-eslint/parser": "^6.17.0",
+        "benchmarkify": "^4.0.0",
+        "create-torrent": "^5.0.9",
+        "eslint": "^8.56.0",
+        "mocha": "^10.2.0",
+        "mock-fs": "^5.2.0",
+        "node-torrent-stream": "github:unusualbob/node-torrent-stream",
+        "rimraf": "^5.0.5"
+    },
+    "dependencies": {
+        "piece-length": "github:michaelrhodes/piece-length"
+    }
 }
