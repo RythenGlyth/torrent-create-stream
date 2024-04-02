@@ -17,6 +17,7 @@ export async function createTorrent({
         isPrivate,
         pieceLength,
         meta,
+        info,
         onPiecesProgress,
         parallelReads
     }: {
@@ -33,6 +34,9 @@ export async function createTorrent({
             "publisher"?: string,
             "publisher-url"?: string,
             [key: string]: unknown
+        },
+        info?: {
+            "source"?: string,
         },
         onPiecesProgress?: (currFile: number, fileCount: number, bytesRead: number, totalBytes: number, currPiece: number, pieceCount: number) => void,
         parallelReads?: number
@@ -205,8 +209,8 @@ export async function createTorrent({
                 let currPiece = 0
                 const collectPiece = async (pieceNum: number) => {
                     //let piece = Buffer.alloc(0)
-                    let hash = crypto.createHash("sha1")
-                    let currLength = 0
+                    const hash = crypto.createHash("sha1")
+                    //let currLength = 0
                     let currFile = pieces[pieceNum].from.file
                     let currFileByte = pieces[pieceNum].from.start
                     while(currFile <= pieces[pieceNum].to.file) {
@@ -217,7 +221,7 @@ export async function createTorrent({
 
                             //piece = Buffer.concat([piece, chunk])
                             hash.update(chunk)
-                            currLength += chunk.length
+                            //currLength += chunk.length
                         })
                         await new Promise((resolve, reject) => {
                             stream.on('end', resolve)
@@ -254,6 +258,13 @@ export async function createTorrent({
                 }
             }
             piecesStream.end()
+
+            if (info) {
+                for (const [key, value] of Object.entries(info)) {
+                    ben.encodeString(key, to)
+                    await ben.encodeObj(value, to)
+                }
+            }
         }, to)
     }, to)
     to.end()
